@@ -1,28 +1,43 @@
 unsigned long time = 0;
 byte brgtStep = 10;
 
-byte leds[] = {9}; // TODO: Add more leds
-int brightness[] = {0};
-boolean rising[] = {true};
-boolean enabled[] = {true};
+byte leds[] = {9, 10, 11};
+int brightness[sizeof(leds)];
+boolean rising[sizeof(leds)];
+boolean enabled[sizeof(leds)];
 
-byte buttons[] = {2}; // TODO: Add more buttons
-int timeouts[] = {0};
+byte buttons[] = {2, 3, 4};
+int timeouts[sizeof(buttons)];
+int previousStates[sizeof(buttons)];
 
 void setup() {
-  pinMode(buttons[0], INPUT_PULLUP);
-  timeouts[0] = millis();
+  for(int i = 0; i < sizeof(leds); i++) {
+    brightness[i] = 0;
+    rising[i] = true;
+    enabled[i] = true;
+  }
+  
+  for(int i = 0; i < sizeof(buttons); i++) {
+    pinMode(buttons[i], INPUT_PULLUP);
+    timeouts[i] = millis();
+    previousStates[i] = HIGH;
+  }  
 }
 
 void loop() {
   // Some debounce magic to clean up button input.
-  for(int i = 0; i < (sizeof(timeouts)/sizeof(int)); i++) {
-    if((millis() - timeouts[i]) >= 200) {
-      int buttonState = digitalRead(buttons[i]);
-        if(buttonState == LOW) {
-          enabled[i] = !enabled[i];
-          timeouts[i] = millis();
-        }
+  int readings[sizeof(buttons)];
+  for(int i = 0; i < sizeof(buttons); i++) {
+    readings[i] = digitalRead(buttons[i]);
+  }
+  
+  for(int i = 0; i < sizeof(buttons); i++) {
+    if((millis() - timeouts[i]) >= 200 && readings[i] != previousStates[i]) {
+      timeouts[i] = millis();
+      previousStates[i] = readings[i];
+      if(readings[i] == LOW) {
+        enabled[i] = !enabled[i];
+      }
     }
   }
   
